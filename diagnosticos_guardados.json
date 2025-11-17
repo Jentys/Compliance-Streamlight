@@ -1,0 +1,38 @@
+{
+    "Planta Huichi": {
+        "aplican": [
+            "NOM-002-STPS-2010",
+            "NOM-004-STPS-1999"
+        ],
+        "no_aplican": [
+            "NOM-001-STPS-2008",
+            "NOM-005-STPS-1998",
+            "NOM-006-STPS-2023",
+            "NOM-009-STPS-2011",
+            "NOM-020-STPS-2011",
+            "NOM-022-STPS-2015",
+            "NOM-027-STPS-2008",
+            "NOM-029-STPS-2011",
+            "NOM-033-STPS-2015",
+            "NOM-034-STPS-2016",
+            "NOM-010-STPS-2014",
+            "NOM-011-STPS-2001",
+            "NOM-012-STPS-2012",
+            "NOM-013-STPS-1993",
+            "NOM-014-STPS-2000",
+            "NOM-015-STPS-2001",
+            "NOM-024-STPS-2001",
+            "NOM-025-STPS-2008",
+            "NOM-035-STPS-2018",
+            "NOM-036-STPS-2018",
+            "NOM-017-STPS-2008",
+            "NOM-018-STPS-2015",
+            "NOM-019-STPS-2011",
+            "NOM-007-STPS-2000",
+            "NOM-008-STPS-2013",
+            "NOM-016-STPS-2001",
+            "NOM-031-STPS-2011",
+            "NOM-037-STPS-2023"
+        ]
+    }
+}

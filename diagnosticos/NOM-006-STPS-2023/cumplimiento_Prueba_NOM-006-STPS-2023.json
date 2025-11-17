@@ -1,0 +1,32 @@
+{
+    "sitio": "Prueba",
+    "norma": "NOM-006-STPS-2023",
+    "cumplimiento": "4.17%",
+    "respuestas": {
+        "La norma aplica a centros de trabajo donde el almacenamiento y manejo de materiales se realiza mediante el uso de maquinaria.": "Sí",
+        "Identificar peligros y evaluar riesgos en las operaciones de almacenamiento y manejo con maquinaria.": "No",
+        "Establecer programa con objetivos, metas y responsables para prevenir riesgos en manejo/almacenamiento con maquinaria.": "No",
+        "Contar con procedimientos para instalación, operación y mantenimiento seguro de la maquinaria usada en manejo/almacenamiento.": "No",
+        "Seleccionar equipos (grúas, montacargas, polipastos, transportadores) acorde a cargas, entorno y compatibilidades.": "No",
+        "La instalación de maquinaria considera estabilidad del terreno, distancias a líneas energizadas y otras interferencias.": "No",
+        "Delimitar y señalizar zonas de exclusión alrededor de equipos durante maniobras.": "No",
+        "Usar eslingas, ganchos, cadenas y accesorios compatibles y certificados para la carga.": "No",
+        "Realizar inspección antes de la operación (frenos, dispositivos de seguridad, neumáticos, alarmas).": "No",
+        "Limitar velocidad, respetar radios de giro, carga centrada, visibilidad y comunicación efectiva.": "No",
+        "Separar rutas, colocar espejos y alarmas audibles/visuales; dar prioridad a peatones.": "No",
+        "Conservar distancias a líneas eléctricas energizadas y otras estructuras.": "No",
+        "Operar dentro de la capacidad nominal y mantener estabilidad (centro de carga, pendientes).": "No",
+        "Contar con alarma de reversa, luces, cinturón y resguardo superior; mantenimiento funcional.": "No",
+        "Usar estabilizadores según tabla de carga; verificación de terreno y nivelación.": "No",
+        "Inspeccionar cadenas/cables, ganchos, frenos y seguros; retirar de servicio si hay daño.": "No",
+        "Asegurar estabilidad de estibas (altura, patrón, amarres) y pasillos libres.": "No",
+        "Definir rutas de circulación, sentidos y prioridades; señalética visible.": "No",
+        "Segregar materiales incompatibles y asegurar sujeción/contención en estanterías.": "No",
+        "Contar con programa de mantenimiento preventivo para cada equipo.": "No",
+        "Aplicar bloqueo/etiquetado (LOTO) durante mantenimiento, conforme a normas aplicables.": "No",
+        "Capacitar y evaluar competencia de operadores para cada tipo de equipo.": "No",
+        "Capacitar a señaleros/vigías para maniobras críticas con grúas o equipos pesados.": "No",
+        "Integrar en el plan de emergencias las maniobras con maquinaria y escenarios de caída/derrame.": "No"
+    },
+    "archivos_evidencia": {}
+}
