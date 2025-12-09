@@ -46,25 +46,31 @@ st.markdown(
 )
 
 # Título principal centrado
-st.markdown('<h1 class="title-h1">Smart EHS Consulting '
-'platform</h1>', unsafe_allow_html=True)
+st.markdown(
+    '<h1 class="title-h1">Smart EHS Consulting platform</h1>',
+    unsafe_allow_html=True
+)
 
 # Tres columnas para los "cuadros"
 col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("Seguridad Laboral y Riesgos"):
-        st.switch_page("Seguridad.py")
+        # El script debe estar en pages/Seguridad.py
+        st.switch_page("pages/Seguridad.py")
 
 with col2:
     if st.button("Normativas y Regulaciones"):
+        # El script debe estar en pages/Compliance.py
         st.switch_page("pages/Compliance.py")
 
 with col3:
     if st.button("Salud Ocupacional"):
-        st.switch_page("Salud.py")
-
+        # El script debe estar en pages/Salud.py
+        st.switch_page("pages/Salud.py")
 
 st.markdown("---")
 if st.button("🔐 Backup de datos de cumplimiento"):
+    # El script debe estar en pages/Backup.py
     st.switch_page("pages/Backup.py")
+
