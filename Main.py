@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Configurar la página
-st.set_page_config(page_title="Smart EHS Consulting Platform", layout="wide")
+st.set_page_config(page_title="Citro-One Safety System 360°", layout="wide")
 
 # CSS personalizado
 st.markdown(
