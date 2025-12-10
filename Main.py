@@ -44,7 +44,7 @@ st.markdown(
 
 # Título principal centrado
 st.markdown(
-    '<h1 class="title-h1">Smart EHS Consulting platform</h1>',
+    '<h1 class="title-h1">SCitro-One Safety System 360°</h1>',
     unsafe_allow_html=True
 )
 
