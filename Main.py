@@ -7,29 +7,26 @@ st.set_page_config(page_title="Smart EHS Consulting Platform", layout="wide")
 st.markdown(
     """
     <style>
-    /* Ocultar la barra nativa de Streamlit (el header con menú) */
     header {visibility: hidden;}
 
-    /* Título principal centrado */
     .title-h1 {
         text-align: center;
-        color: #1976D2; /* Azul */
+        color: #1976D2;
         font-size: 30px;
         font-weight: bold;
         margin-top: 20px;
         margin-bottom: 30px;
     }
 
-    /* Estilo general de los botones (cuadros) */
     .stButton > button {
-        background-color: #ff9800; /* Naranja */
+        background-color: #ff9800;
         color: white;
         border: none;
         border-radius: 12px;
         padding: 40px 20px;
         font-size: 18px;
         font-weight: bold;
-        margin: 20px;
+        margin: 20px 0px;
         width: 100%;
         height: 120px;
         cursor: pointer;
@@ -51,26 +48,26 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Tres columnas para los "cuadros"
+# ===== Fila 1: tres botones =====
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("Seguridad Laboral y Riesgos"):
-        # El script debe estar en pages/Seguridad.py
+    if st.button("Seguridad Laboral y Riesgos", use_container_width=True):
         st.switch_page("pages/Seguridad.py")
 
 with col2:
-    if st.button("Normativas y Regulaciones"):
-        # El script debe estar en pages/Compliance.py
+    if st.button("Normativas y Regulaciones", use_container_width=True):
         st.switch_page("pages/Compliance.py")
 
 with col3:
-    if st.button("Salud Ocupacional"):
-        # El script debe estar en pages/Salud.py
+    if st.button("Salud Ocupacional", use_container_width=True):
         st.switch_page("pages/Salud.py")
 
 st.markdown("---")
-if st.button("🔐 Backup de datos de cumplimiento"):
-    # El script debe estar en pages/Backup.py
-    st.switch_page("pages/Backup.py")
 
+# ===== Fila 2: botón de Backup centrado =====
+bcol1, bcol2, bcol3 = st.columns([1, 1, 1])
+
+with bcol2:  # botón en la columna de en medio
+    if st.button("🔐 Backup de datos de cumplimiento", use_container_width=True):
+        st.switch_page("pages/Backup.py")
