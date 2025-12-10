@@ -58,7 +58,7 @@ with header_left:
     st.markdown(f"## Evaluación de Cumplimiento para {norma_actual}")
 with header_right:
     if st.button("← Regresar al Diagnóstico"):
-        st.switch_page("pages\\Compliance.py")  # respeta tu ruta original
+        st.switch_page("pages/Compliance.py")  # respeta tu ruta original
 
 st.markdown("---")
 
