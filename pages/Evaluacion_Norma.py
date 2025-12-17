@@ -22,14 +22,16 @@ from drive_uploader import (
 st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
 
 # -------------------------------------------------------------------
-# Manejo del callback OAuth (?code=...) al volver de Google
+# Manejo del callback OAuth usando API estable: st.query_params
 # -------------------------------------------------------------------
-params = st.experimental_get_query_params()
-code = params.get("code", [None])[0]
+code = st.query_params.get("code", None)
 if code and "google_creds" not in st.session_state:
+    # Intercambia el code por tokens y guarda la sesión
     fetch_token_from_code(code)
-    # Limpiar la URL para evitar re-ejecución del callback
-    st.experimental_set_query_params()
+    # Limpia solo el parámetro 'code' manteniendo otros (si existieran)
+    qp = dict(st.query_params)
+    qp.pop("code", None)
+    st.query_params = qp  # reasigna el dict limpio
 
 # -------------------------------------------------------------------
 # Funciones auxiliares (basadas en tu código original)
@@ -107,21 +109,9 @@ if not df.empty:
         data_resultados = []
 
         # Resolver nombres de columnas de forma flexible
-        col_desc = None
-        for cand in ["Descripción", "Descripcion"]:
-            if cand in df.columns:
-                col_desc = cand
-                break
-        col_cat = None
-        for cand in ["Categoría", "Categoria"]:
-            if cand in df.columns:
-                col_cat = cand
-                break
-        col_sec = None
-        for cand in ["Sección / Capítulo", "Seccion / Capitulo"]:
-            if cand in df.columns:
-                col_sec = cand
-                break
+        col_desc = next((c for c in ["Descripción", "Descripcion"] if c in df.columns), None)
+        col_cat  = next((c for c in ["Categoría", "Categoria"] if c in df.columns), None)
+        col_sec  = next((c for c in ["Sección / Capítulo", "Seccion / Capitulo"] if c in df.columns), None)
 
         for descripcion, respuesta in respuestas_usuario.items():
             categoria = "N/A"
@@ -212,6 +202,7 @@ if not df.empty:
                     with cols[1]:
                         if st.button("Eliminar", key=f"del_{hash(url)}"):
                             archivos_evidencia[descripcion_sel].remove(url)
+                            # Persistir cambios
                             folder = os.path.join("diagnosticos", norma_actual)
                             os.makedirs(folder, exist_ok=True)
                             archivo_guardado = os.path.join(
@@ -352,7 +343,7 @@ if not df.empty:
                 json.dump({
                     "sitio": sitio_actual,
                     "norma": norma_actual,
-                    "cumplimiento": f"{cumplimiento:.2f}%",
+                    "cumplimiento": f"{cumplimiento:.                    "cumplimiento": f"{cumplimiento:.2f}%",
                     "respuestas": respuestas_map,
                     "archivos_evidencia": {}  # se llenará al subir evidencias
                 }, file, indent=4, ensure_ascii=False)
