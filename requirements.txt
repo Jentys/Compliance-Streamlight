@@ -7,3 +7,6 @@ folium
 streamlit-folium
 XlsxWriter>=3.2.0
 streamlit-aggrid
+google-api-python-client
+google-auth-httplib2
+google
