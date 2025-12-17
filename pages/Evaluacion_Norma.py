@@ -6,33 +6,33 @@ import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-# Integración Drive (utilidades en la raíz del proyecto)
+# Utilidades de Drive (colocar drive_uploader.py en la raíz del repo)
 from drive_uploader import (
-    fetch_token_from_code,     # callback OAuth
-    get_service,               # obtiene servicio de Drive (o muestra botón Autorizar)
-    ensure_path,               # crea/encuentra jerarquía de carpetas
-    upload_file,               # sube archivo y regresa (file_id, web_link)
+    fetch_token_from_code,     # maneja el callback OAuth (?code=)
+    get_service,               # obtiene el servicio de Drive o muestra "Autorizar"
+    ensure_path,               # crea/encuentra carpetas: raiz/sitio/norma/descripcion
+    upload_file,               # sube archivo → (file_id, web_link)
     set_permission_anyone,     # abre el enlace para "anyone with the link"
-    slugify                    # normaliza texto para nombres/carpetas
+    slugify                    # normaliza texto
 )
 
 # -------------------------------------------------------------------
-# Configuración de página (debe ser la primera llamada de Streamlit)
+# Configuración de la página
 # -------------------------------------------------------------------
 st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
 
 # -------------------------------------------------------------------
-# Manejo del callback OAuth ?code= al volver de Google
+# Manejo del callback OAuth (?code=...) al volver de Google
 # -------------------------------------------------------------------
 params = st.experimental_get_query_params()
 code = params.get("code", [None])[0]
 if code and "google_creds" not in st.session_state:
     fetch_token_from_code(code)
-    # Limpia parámetros para no re-ejecutar el callback en cada run
+    # Limpiar la URL para evitar re-ejecución del callback
     st.experimental_set_query_params()
 
 # -------------------------------------------------------------------
-# Utilidades de carga/guardado (sin cambios en lógica base)
+# Funciones auxiliares (basadas en tu código original)
 # -------------------------------------------------------------------
 def cargar_diagnostico_especifico(norma: str) -> pd.DataFrame:
     """Carga el Excel específico de la norma: <norma>_diagnostico.xlsx."""
@@ -48,7 +48,7 @@ def cargar_diagnostico_especifico(norma: str) -> pd.DataFrame:
     return pd.DataFrame()
 
 def cargar_diagnostico_guardado(norma: str, sitio: str) -> dict:
-    """Carga el JSON persistido con respuestas/evidencias."""
+    """Carga el JSON persistido con respuestas/evidencias de una norma/sitio."""
     folder = os.path.join("diagnosticos", norma)
     archivo_guardado = os.path.join(folder, f"cumplimiento_{sitio}_{norma}.json")
     if os.path.exists(archivo_guardado):
@@ -66,12 +66,12 @@ def cargar_diagnostico_guardado(norma: str, sitio: str) -> dict:
     return {}
 
 # -------------------------------------------------------------------
-# Recuperar norma y sitio desde session_state
+# Estado de la página: sitio y norma actuales
 # -------------------------------------------------------------------
 sitio_actual = st.session_state.get("sitio_actual", "")
 norma_actual = st.session_state.get("norma_actual", "")
 
-# Cargar DF y respuestas guardadas
+# Carga de datos
 df = cargar_diagnostico_especifico(norma_actual)
 diagnostico_guardado = cargar_diagnostico_guardado(norma_actual, sitio_actual)
 
@@ -83,7 +83,7 @@ with header_left:
     st.markdown(f"## Evaluación de Cumplimiento para **{norma_actual}**")
 with header_right:
     if st.button("← Regresar al Diagnóstico"):
-        st.switch_page("pages/Compliance.py")
+        st.switch_page("pages/Compliance.py")  # respeta tu ruta original
 
 st.markdown("---")
 
@@ -106,19 +106,27 @@ if not df.empty:
     if respuestas_usuario:
         data_resultados = []
 
-        # Columnas esperadas (flexible)
-        col_desc = "Descripción" if "Descripción" in df.columns else (
-                   "Descripcion" if "Descripcion" in df.columns else None)
-        col_cat = "Categoría" if "Categoría" in df.columns else (
-                  "Categoria" if "Categoria" in df.columns else None)
-        col_sec = "Sección / Capítulo" if "Sección / Capítulo" in df.columns else (
-                  "Seccion / Capitulo" if "Seccion / Capitulo" in df.columns else None)
+        # Resolver nombres de columnas de forma flexible
+        col_desc = None
+        for cand in ["Descripción", "Descripcion"]:
+            if cand in df.columns:
+                col_desc = cand
+                break
+        col_cat = None
+        for cand in ["Categoría", "Categoria"]:
+            if cand in df.columns:
+                col_cat = cand
+                break
+        col_sec = None
+        for cand in ["Sección / Capítulo", "Seccion / Capitulo"]:
+            if cand in df.columns:
+                col_sec = cand
+                break
 
         for descripcion, respuesta in respuestas_usuario.items():
-            # Buscar metadatos
             categoria = "N/A"
             seccion_cap = "N/A"
-            if col_desc is not None:
+            if col_desc:
                 filas = df[df[col_desc] == descripcion]
                 if not filas.empty:
                     if col_cat and col_cat in filas.columns:
@@ -144,7 +152,7 @@ if not df.empty:
         cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
         st.markdown(f"### 📝 Evaluación de Cumplimiento (**{cumplimiento:.2f}%**)")
 
-        # AgGrid con selección de fila
+        # AgGrid
         gb = GridOptionsBuilder.from_dataframe(df_resultados)
         gb.configure_default_column(filter=True, sortable=True)
         gb.configure_selection(selection_mode="single", use_checkbox=True)
@@ -157,7 +165,7 @@ if not df.empty:
             fit_columns_on_grid_load=True
         )
 
-        # Obtener fila seleccionada
+        # Fila seleccionada
         selected_rows = grid_response.get("selected_rows", [])
         selected_row = selected_rows[0] if isinstance(selected_rows, list) and selected_rows else None
 
@@ -165,7 +173,7 @@ if not df.empty:
             descripcion_sel = selected_row["Descripción"]
             estado_actual = selected_row["Estado"]
 
-            # Cambiar estado (Cumple/No cumple)
+            # Botón para cambiar estado
             if st.button("Cambiar estado"):
                 respuestas_usuario[descripcion_sel] = "No" if estado_actual == "Cumple" else "Sí"
 
@@ -173,7 +181,7 @@ if not df.empty:
                 total_count = len(respuestas_usuario)
                 nuevo_cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
 
-                # Persistir JSON
+                # Persistir
                 folder = os.path.join("diagnosticos", norma_actual)
                 os.makedirs(folder, exist_ok=True)
                 archivo_guardado = os.path.join(folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json")
@@ -187,12 +195,12 @@ if not df.empty:
                     }, file, indent=4, ensure_ascii=False)
 
                 st.success(
-                    f"Se cambió la descripción **{descripcion_sel}** a estado "
+                    f"Se cambió **{descripcion_sel}** a "
                     f"**{'No cumple' if estado_actual == 'Cumple' else 'Cumple'}**."
                 )
                 st.rerun()
 
-            # Evidencias actuales para la descripción seleccionada
+            # Evidencias actuales (URLs de Drive)
             st.markdown(f"### Evidencias para: **{descripcion_sel}**")
             evidencias_urls = archivos_evidencia.get(descripcion_sel, [])
             if evidencias_urls:
@@ -204,7 +212,6 @@ if not df.empty:
                     with cols[1]:
                         if st.button("Eliminar", key=f"del_{hash(url)}"):
                             archivos_evidencia[descripcion_sel].remove(url)
-                            # Persistir cambios
                             folder = os.path.join("diagnosticos", norma_actual)
                             os.makedirs(folder, exist_ok=True)
                             archivo_guardado = os.path.join(
@@ -217,10 +224,10 @@ if not df.empty:
                                     "respuestas": respuestas_usuario,
                                     "archivos_evidencia": archivos_evidencia
                                 }, f, indent=4, ensure_ascii=False)
-                            st.success("Enlace de evidencia eliminado del registro.")
+                            st.success("Enlace eliminado del registro.")
                             st.rerun()
 
-            # Subir nuevas evidencias
+            # Uploader de nuevas evidencias
             archivos_subidos = st.file_uploader(
                 "Selecciona uno o varios archivos",
                 type=["jpg", "jpeg", "png", "docx", "pdf", "xlsx"],
@@ -228,9 +235,7 @@ if not df.empty:
                 key=f"file_{slugify(descripcion_sel)}"
             )
 
-            # --------------------------
             # Subida a Google Drive
-            # --------------------------
             ROOT_FOLDER_ID = st.secrets["DRIVE_ROOT_FOLDER_ID"]
 
             if archivos_subidos:
@@ -299,7 +304,7 @@ if not df.empty:
     else:
         st.markdown("## 📝 Responder Preguntas de Diagnóstico")
 
-        # Detecta columna de pregunta
+        # Detectar columna de pregunta
         if "Preguntas para Diagnóstico" in df.columns:
             COL_PREG = "Preguntas para Diagnóstico"
         elif "Pregunta para Diagnóstico" in df.columns:
@@ -309,29 +314,26 @@ if not df.empty:
         elif "Diagnostico" in df.columns:
             COL_PREG = "Diagnostico"
         else:
-            COL_PREG = "Descripción"  # último recurso
+            COL_PREG = "Descripción"
 
-        respuestas_usuario = []
+        # Columna descripción
+        col_desc = "Descripción" if "Descripción" in df.columns else (
+            "Descripcion" if "Descripcion" in df.columns else COL_PREG
+        )
+
         respuestas_map = {}
         cumple_list = []
         no_cumple_list = []
 
-        # Columnas esperadas para descripción
-        col_desc = "Descripción" if "Descripción" in df.columns else (
-                   "Descripcion" if "Descripcion" in df.columns else COL_PREG)
-
         for _, row in df.iterrows():
             descripcion = str(row.get(col_desc, "")).strip()
-            texto_pregunta = str(row.get(COL_PREG, "")).strip()
-            if texto_pregunta == "":
-                texto_pregunta = descripcion
+            texto_pregunta = str(row.get(COL_PREG, "")).strip() or descripcion
 
             respuesta = st.radio(
                 f"🔹 {texto_pregunta}",
                 ("No", "Sí"),
                 key=f"{norma_actual}_{descripcion}"
             )
-
             respuestas_map[descripcion] = respuesta
             if respuesta == "Sí":
                 cumple_list.append(descripcion)
@@ -352,9 +354,9 @@ if not df.empty:
                     "norma": norma_actual,
                     "cumplimiento": f"{cumplimiento:.2f}%",
                     "respuestas": respuestas_map,
-                    "archivos_evidencia": {}   # se llenará al subir evidencias
+                    "archivos_evidencia": {}  # se llenará al subir evidencias
                 }, file, indent=4, ensure_ascii=False)
-                       st.success("✅ Evaluación guardada.")
+            st.success("✅ Evaluación guardada.")
             st.rerun()
 else:
-
+ st.warning("⚠️ No se ha seleccionado una norma para evaluar.")
