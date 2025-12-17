@@ -6,14 +6,14 @@ import pandas as pd
 import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-# Utilidades de Drive (asegúrate de que drive_uploader.py esté en la raíz)
+# Utilidades de Drive (colocar drive_uploader.py en la raíz del repo)
 from drive_uploader import (
     fetch_token_from_code,     # maneja el callback OAuth (?code=)
     get_service,               # obtiene el servicio de Drive o muestra "Autorizar"
     ensure_path,               # crea/encuentra carpetas: raiz/sitio/norma/descripcion
     upload_file,               # sube archivo → (file_id, web_link)
     set_permission_anyone,     # abre el enlace para "anyone with the link"
-    slugify                    # normaliza texto para nombres/carpetas
+    slugify                    # normaliza texto
 )
 
 # -------------------------------------------------------------------
@@ -22,33 +22,17 @@ from drive_uploader import (
 st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
 
 # -------------------------------------------------------------------
-# Manejo del callback OAuth (?code=...) con API estable si existe
+# Manejo del callback OAuth (?code=...) al volver de Google
 # -------------------------------------------------------------------
-def _read_code_param_once():
-    """Lee 'code' de la URL usando la API estable si está disponible; si no, usa la experimental.
-       No mezcla ambas APIs para evitar StreamlitAPIException."""
-    # Streamlit estable (1.31+): query_params
-    if hasattr(st, "query_params"):
-        code_val = st.query_params.get("code", None)
-        if code_val and "google_creds" not in st.session_state:
-            fetch_token_from_code(code_val)
-            # limpia solo el parámetro 'code' y re-asigna el dict
-            clean_qp = dict(st.query_params)
-            clean_qp.pop("code", None)
-            st.query_params = clean_qp
-    else:
-        # Streamlit anterior: experimental_get_query_params
-        params = st.experimental_get_query_params()
-        code_val = params.get("code", [None])[0]
-        if code_val and "google_creds" not in st.session_state:
-            fetch_token_from_code(code_val)
-            # limpia parámetros
-            st.experimental_set_query_params()
-
-_read_code_param_once()
+params = st.experimental_get_query_params()
+code = params.get("code", [None])[0]
+if code and "google_creds" not in st.session_state:
+    fetch_token_from_code(code)
+    # Limpiar la URL para evitar re-ejecución del callback
+    st.experimental_set_query_params()
 
 # -------------------------------------------------------------------
-# Funciones auxiliares (basadas en tu flujo original)
+# Funciones auxiliares (basadas en tu código original)
 # -------------------------------------------------------------------
 def cargar_diagnostico_especifico(norma: str) -> pd.DataFrame:
     """Carga el Excel específico de la norma: <norma>_diagnostico.xlsx."""
@@ -123,9 +107,21 @@ if not df.empty:
         data_resultados = []
 
         # Resolver nombres de columnas de forma flexible
-        col_desc = next((c for c in ["Descripción", "Descripcion"] if c in df.columns), None)
-        col_cat  = next((c for c in ["Categoría", "Categoria"] if c in df.columns), None)
-        col_sec  = next((c for c in ["Sección / Capítulo", "Seccion / Capitulo"] if c in df.columns), None)
+        col_desc = None
+        for cand in ["Descripción", "Descripcion"]:
+            if cand in df.columns:
+                col_desc = cand
+                break
+        col_cat = None
+        for cand in ["Categoría", "Categoria"]:
+            if cand in df.columns:
+                col_cat = cand
+                break
+        col_sec = None
+        for cand in ["Sección / Capítulo", "Seccion / Capitulo"]:
+            if cand in df.columns:
+                col_sec = cand
+                break
 
         for descripcion, respuesta in respuestas_usuario.items():
             categoria = "N/A"
@@ -210,13 +206,12 @@ if not df.empty:
             if evidencias_urls:
                 st.write("Evidencias en la nube (Google Drive):")
                 for url in evidencias_urls:
-                    c1, c2 = st.columns([0.8, 0.2])
-                    with c1:
+                    cols = st.columns([0.8, 0.2])
+                    with cols[0]:
                         st.markdown(f"- {url}")
-                    with c2:
+                    with cols[1]:
                         if st.button("Eliminar", key=f"del_{hash(url)}"):
                             archivos_evidencia[descripcion_sel].remove(url)
-                            # Persistir cambios
                             folder = os.path.join("diagnosticos", norma_actual)
                             os.makedirs(folder, exist_ok=True)
                             archivo_guardado = os.path.join(
@@ -362,6 +357,7 @@ if not df.empty:
                     "archivos_evidencia": {}  # se llenará al subir evidencias
                 }, file, indent=4, ensure_ascii=False)
             st.success("✅ Evaluación guardada.")
-                       st.rerun()
+            st.rerun()
 else:
+   
  st.warning("⚠️ No se ha seleccionado una norma para evaluar.")
