@@ -1,34 +1,41 @@
 
 # Evaluacion_Norma.py — Integración con Google Drive (Streamlit Cloud)
-import streamlit as st
-import pandas as pd
-import json
 import os
+import json
+import pandas as pd
+import streamlit as st
 from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
-# --------------------------
-# 1) Manejo de OAuth (callback)
-# --------------------------
-from drive_uploader import fetch_token_from_code, get_service, ensure_path, upload_file, set_permission_anyone, slugify
+# Integración Drive (utilidades en la raíz del proyecto)
+from drive_uploader import (
+    fetch_token_from_code,     # callback OAuth
+    get_service,               # obtiene servicio de Drive (o muestra botón Autorizar)
+    ensure_path,               # crea/encuentra jerarquía de carpetas
+    upload_file,               # sube archivo y regresa (file_id, web_link)
+    set_permission_anyone,     # abre el enlace para "anyone with the link"
+    slugify                    # normaliza texto para nombres/carpetas
+)
 
-# Captura '?code=' cuando Google regresa a la app tras autorizar Drive
+# -------------------------------------------------------------------
+# Configuración de página (debe ser la primera llamada de Streamlit)
+# -------------------------------------------------------------------
+st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
+
+# -------------------------------------------------------------------
+# Manejo del callback OAuth ?code= al volver de Google
+# -------------------------------------------------------------------
 params = st.experimental_get_query_params()
 code = params.get("code", [None])[0]
 if code and "google_creds" not in st.session_state:
     fetch_token_from_code(code)
-    # Limpia la URL para no re-ejecutar el callback
+    # Limpia parámetros para no re-ejecutar el callback en cada run
     st.experimental_set_query_params()
 
-# Configuración de la página
-st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
-
-# --------------------------
-# 2) Funciones auxiliares (sin cambios en lógica base)
-# --------------------------
+# -------------------------------------------------------------------
+# Utilidades de carga/guardado (sin cambios en lógica base)
+# -------------------------------------------------------------------
 def cargar_diagnostico_especifico(norma: str) -> pd.DataFrame:
-    """
-    Carga el archivo Excel específico de la norma, p.ej: 'NOM-001_diagnostico.xlsx'.
-    """
+    """Carga el Excel específico de la norma: <norma>_diagnostico.xlsx."""
     archivo_norma = f"{norma}_diagnostico.xlsx"
     if os.path.exists(archivo_norma):
         try:
@@ -41,9 +48,7 @@ def cargar_diagnostico_especifico(norma: str) -> pd.DataFrame:
     return pd.DataFrame()
 
 def cargar_diagnostico_guardado(norma: str, sitio: str) -> dict:
-    """
-    Carga el JSON persistido con respuestas y evidencias de una norma/sitio.
-    """
+    """Carga el JSON persistido con respuestas/evidencias."""
     folder = os.path.join("diagnosticos", norma)
     archivo_guardado = os.path.join(folder, f"cumplimiento_{sitio}_{norma}.json")
     if os.path.exists(archivo_guardado):
@@ -60,53 +65,66 @@ def cargar_diagnostico_guardado(norma: str, sitio: str) -> dict:
             return {}
     return {}
 
-# --------------------------
-# 3) Estado y carga de datos
-# --------------------------
+# -------------------------------------------------------------------
+# Recuperar norma y sitio desde session_state
+# -------------------------------------------------------------------
 sitio_actual = st.session_state.get("sitio_actual", "")
 norma_actual = st.session_state.get("norma_actual", "")
 
+# Cargar DF y respuestas guardadas
 df = cargar_diagnostico_especifico(norma_actual)
 diagnostico_guardado = cargar_diagnostico_guardado(norma_actual, sitio_actual)
 
-# --------------------------
-# 4) Encabezado de la página
-# --------------------------
+# -------------------------------------------------------------------
+# Encabezado
+# -------------------------------------------------------------------
 header_left, header_right = st.columns([0.8, 0.2])
 with header_left:
     st.markdown(f"## Evaluación de Cumplimiento para **{norma_actual}**")
 with header_right:
     if st.button("← Regresar al Diagnóstico"):
-        st.switch_page("pages/Compliance.py")  # respeta tu ruta original
+        st.switch_page("pages/Compliance.py")
 
 st.markdown("---")
 
-# --------------------------
-# 5) Estructura de evidencias
-# --------------------------
+# -------------------------------------------------------------------
+# Estructura de evidencias
+# -------------------------------------------------------------------
 archivos_evidencia = diagnostico_guardado.get("archivos_evidencia", {})
 if not isinstance(archivos_evidencia, dict):
     archivos_evidencia = {}
 
-# --------------------------
-# 6) Flujo principal
-# --------------------------
+# -------------------------------------------------------------------
+# Flujo principal
+# -------------------------------------------------------------------
 if not df.empty:
-    # Respuestas previas (si existen)
     respuestas_usuario = diagnostico_guardado.get("respuestas", {})
 
-    # ===== Escenario 1: YA HAY RESPUESTAS → Reporte con AgGrid =====
+    # ================================================================
+    # Escenario 1: YA HAY RESPUESTAS → Reporte con AgGrid
+    # ================================================================
     if respuestas_usuario:
         data_resultados = []
+
+        # Columnas esperadas (flexible)
+        col_desc = "Descripción" if "Descripción" in df.columns else (
+                   "Descripcion" if "Descripcion" in df.columns else None)
+        col_cat = "Categoría" if "Categoría" in df.columns else (
+                  "Categoria" if "Categoria" in df.columns else None)
+        col_sec = "Sección / Capítulo" if "Sección / Capítulo" in df.columns else (
+                  "Seccion / Capitulo" if "Seccion / Capitulo" in df.columns else None)
+
         for descripcion, respuesta in respuestas_usuario.items():
-            # Busca metadatos en el DF
-            fila = df.loc[df.get("Descripción", pd.Series(dtype=str)) == descripcion]
-            if not fila.empty:
-                categoria = fila.get("Categoría", pd.Series(["N/A"])).values[0]
-                seccion_cap = fila.get("Sección / Capítulo", pd.Series(["N/A"])).values[0]
-            else:
-                categoria = "N/A"
-                seccion_cap = "N/A"
+            # Buscar metadatos
+            categoria = "N/A"
+            seccion_cap = "N/A"
+            if col_desc is not None:
+                filas = df[df[col_desc] == descripcion]
+                if not filas.empty:
+                    if col_cat and col_cat in filas.columns:
+                        categoria = str(filas.iloc[0][col_cat])
+                    if col_sec and col_sec in filas.columns:
+                        seccion_cap = str(filas.iloc[0][col_sec])
 
             estado = "Cumple" if respuesta == "Sí" else "No cumple"
             archivos_count = len(archivos_evidencia.get(descripcion, []))
@@ -126,7 +144,7 @@ if not df.empty:
         cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
         st.markdown(f"### 📝 Evaluación de Cumplimiento (**{cumplimiento:.2f}%**)")
 
-        # AgGrid
+        # AgGrid con selección de fila
         gb = GridOptionsBuilder.from_dataframe(df_resultados)
         gb.configure_default_column(filter=True, sortable=True)
         gb.configure_selection(selection_mode="single", use_checkbox=True)
@@ -139,30 +157,23 @@ if not df.empty:
             fit_columns_on_grid_load=True
         )
 
-        # Fila seleccionada
-        selected_rows = grid_response["selected_rows"]
-        selected_row = None
-        if isinstance(selected_rows, list) and len(selected_rows) > 0:
-            selected_row = selected_rows[0]
-        elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
-            selected_row = selected_rows.iloc[0].to_dict()
+        # Obtener fila seleccionada
+        selected_rows = grid_response.get("selected_rows", [])
+        selected_row = selected_rows[0] if isinstance(selected_rows, list) and selected_rows else None
 
         if selected_row is not None:
             descripcion_sel = selected_row["Descripción"]
             estado_actual = selected_row["Estado"]
 
-            # Botón para cambiar estado (Cumple / No cumple)
+            # Cambiar estado (Cumple/No cumple)
             if st.button("Cambiar estado"):
-                if estado_actual == "Cumple":
-                    respuestas_usuario[descripcion_sel] = "No"
-                else:
-                    respuestas_usuario[descripcion_sel] = "Sí"
+                respuestas_usuario[descripcion_sel] = "No" if estado_actual == "Cumple" else "Sí"
 
                 cumple_count = sum(1 for r in respuestas_usuario.values() if r == "Sí")
                 total_count = len(respuestas_usuario)
                 nuevo_cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
 
-                # Persistencia
+                # Persistir JSON
                 folder = os.path.join("diagnosticos", norma_actual)
                 os.makedirs(folder, exist_ok=True)
                 archivo_guardado = os.path.join(folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json")
@@ -181,21 +192,19 @@ if not df.empty:
                 )
                 st.rerun()
 
-            # ===== Evidencias para la descripción seleccionada =====
+            # Evidencias actuales para la descripción seleccionada
             st.markdown(f"### Evidencias para: **{descripcion_sel}**")
-            archivos_actuales = archivos_evidencia.get(descripcion_sel, [])
-
-            # Listado de evidencias (URLs de Drive)
-            if archivos_actuales:
+            evidencias_urls = archivos_evidencia.get(descripcion_sel, [])
+            if evidencias_urls:
                 st.write("Evidencias en la nube (Google Drive):")
-                for url in archivos_actuales:
+                for url in evidencias_urls:
                     cols = st.columns([0.8, 0.2])
                     with cols[0]:
-                        # Muestra el enlace; si prefieres, usar markdown con nombre legible
-                        st.markdown(f"- [{os.path.basename(url)}]({url})")
+                        st.markdown(f"- {url}")
                     with cols[1]:
                         if st.button("Eliminar", key=f"del_{hash(url)}"):
                             archivos_evidencia[descripcion_sel].remove(url)
+                            # Persistir cambios
                             folder = os.path.join("diagnosticos", norma_actual)
                             os.makedirs(folder, exist_ok=True)
                             archivo_guardado = os.path.join(
@@ -211,7 +220,7 @@ if not df.empty:
                             st.success("Enlace de evidencia eliminado del registro.")
                             st.rerun()
 
-            # Uploader de nuevas evidencias
+            # Subir nuevas evidencias
             archivos_subidos = st.file_uploader(
                 "Selecciona uno o varios archivos",
                 type=["jpg", "jpeg", "png", "docx", "pdf", "xlsx"],
@@ -220,7 +229,7 @@ if not df.empty:
             )
 
             # --------------------------
-            # SUBIDA A GOOGLE DRIVE
+            # Subida a Google Drive
             # --------------------------
             ROOT_FOLDER_ID = st.secrets["DRIVE_ROOT_FOLDER_ID"]
 
@@ -230,7 +239,7 @@ if not df.empty:
                     if service is None:
                         st.stop()  # esperar autorización
 
-                    # Jerarquía en Drive: raiz / sitio / norma / descripcion
+                    # Jerarquía: raiz / sitio / norma / descripcion
                     dest_folder_id = ensure_path(service, ROOT_FOLDER_ID, [
                         str(sitio_actual),
                         str(norma_actual),
@@ -251,18 +260,18 @@ if not df.empty:
                         display_name = f"{sitio_actual}_{norma_actual}_{slugify(descripcion_sel)}_{file_obj.name}"
                         file_id, web_link = upload_file(service, tmp_path, dest_folder_id, display_name)
 
-                        # Abierto por enlace (anyone with the link)
+                        # Abrir por enlace (anyone with the link)
                         set_permission_anyone(service, file_id)
 
                         archivos_evidencia[descripcion_sel].append(web_link)
 
-                        # Limpia temporal
+                        # Limpieza temporal
                         try:
                             os.remove(tmp_path)
                         except Exception:
                             pass
 
-                    # Recalcula cumplimiento y persiste JSON
+                    # Recalcular cumplimiento y persistir JSON
                     cumple_count = sum(1 for r in respuestas_usuario.values() if r == "Sí")
                     total_count = len(respuestas_usuario)
                     nuevo_cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
@@ -284,11 +293,13 @@ if not df.empty:
                     st.success("Archivo(s) subido(s) a Google Drive y registrados correctamente.")
                     st.rerun()
 
-    # ===== Escenario 2: NO hay respuestas → Mostrar preguntas y guardar evaluación =====
+    # ================================================================
+    # Escenario 2: NO hay respuestas → Preguntas y guardado
+    # ================================================================
     else:
         st.markdown("## 📝 Responder Preguntas de Diagnóstico")
 
-        # Detecta la columna de pregunta (flexible)
+        # Detecta columna de pregunta
         if "Preguntas para Diagnóstico" in df.columns:
             COL_PREG = "Preguntas para Diagnóstico"
         elif "Pregunta para Diagnóstico" in df.columns:
@@ -300,23 +311,28 @@ if not df.empty:
         else:
             COL_PREG = "Descripción"  # último recurso
 
-        respuestas_usuario = {}
+        respuestas_usuario = []
+        respuestas_map = {}
         cumple_list = []
         no_cumple_list = []
 
+        # Columnas esperadas para descripción
+        col_desc = "Descripción" if "Descripción" in df.columns else (
+                   "Descripcion" if "Descripcion" in df.columns else COL_PREG)
+
         for _, row in df.iterrows():
-            descripcion = row.get("Descripción", "")
-            texto_pregunta = row.get(COL_PREG, "")
-            if pd.isna(texto_pregunta) or str(texto_pregunta).strip() == "":
-                texto_pregunta = descripcion  # fallback
-            texto_pregunta = str(texto_pregunta).strip()
+            descripcion = str(row.get(col_desc, "")).strip()
+            texto_pregunta = str(row.get(COL_PREG, "")).strip()
+            if texto_pregunta == "":
+                texto_pregunta = descripcion
 
             respuesta = st.radio(
                 f"🔹 {texto_pregunta}",
                 ("No", "Sí"),
                 key=f"{norma_actual}_{descripcion}"
             )
-            respuestas_usuario[descripcion] = respuesta
+
+            respuestas_map[descripcion] = respuesta
             if respuesta == "Sí":
                 cumple_list.append(descripcion)
             else:
@@ -335,11 +351,11 @@ if not df.empty:
                     "sitio": sitio_actual,
                     "norma": norma_actual,
                     "cumplimiento": f"{cumplimiento:.2f}%",
-                    "respuestas": respuestas_usuario,
-                    "archivos_evidencia": {}  # se llenará cuando subas evidencias
+                    "respuestas": respuestas_map,
+                    "archivos_evidencia": {}   # se llenará al subir evidencias
                 }, file, indent=4, ensure_ascii=False)
-            st.success("✅ Evaluación guardada.")
+                       st.success("✅ Evaluación guardada.")
             st.rerun()
 else:
-    st.warning("⚠️ No se ha seleccionado una norma para evaluar.")
+
 ``
