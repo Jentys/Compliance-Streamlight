@@ -162,11 +162,71 @@ st.markdown(
             margin-top: 16px;
         }
 
+        .content-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
         .section-title {
             font-size: 20px;
             font-weight: 700;
             color: var(--text-dark);
             margin-bottom: 12px;
+        }
+
+        .stTextInput input,
+        .stSelectbox div[data-baseweb=\"select\"] > div,
+        .stTextArea textarea {
+            border-radius: 14px !important;
+            border: 1px solid #E2E8F0 !important;
+            background: #F8FAFC !important;
+            padding: 12px 14px !important;
+            font-size: 14px !important;
+            box-shadow: none !important;
+        }
+
+        .stSelectbox div[data-baseweb=\"select\"] > div {
+            min-height: 44px;
+        }
+
+        .stTextInput input:focus,
+        .stSelectbox div[data-baseweb=\"select\"] > div:focus-within,
+        .stTextArea textarea:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.15) !important;
+        }
+
+        .stRadio [role=\"radiogroup\"] {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stRadio label {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 999px;
+            padding: 6px 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-right: 0;
+        }
+
+        .stExpander details {
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            background: white;
+            padding: 4px 12px;
+        }
+
+        .stExpander summary {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .stAlert {
+            border-radius: 16px;
         }
 
         .subtle-divider {
