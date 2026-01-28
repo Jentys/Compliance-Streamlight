@@ -280,7 +280,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-menu_left, menu_right = st.columns(2, gap="large")
+menu_left, menu_middle, menu_right = st.columns(3, gap="large")
 with menu_left:
     st.markdown(
         """
@@ -300,7 +300,7 @@ with menu_left:
         st.rerun()
     st.markdown("</div></div>", unsafe_allow_html=True)
 
-with menu_right:
+with menu_middle:
     st.markdown(
         """
         <div class="menu-card">
@@ -317,6 +317,24 @@ with menu_right:
     if st.button("Ver historial", key="diagnosticos_previos", use_container_width=True):
         st.session_state["opcion"] = "Revisar Diagnósticos Previos"
         st.rerun()
+    st.markdown("</div></div>", unsafe_allow_html=True)
+
+with menu_right:
+    st.markdown(
+        """
+        <div class="menu-card">
+            <div class="menu-icon"><span class="material-icons-round">bar_chart</span></div>
+            <h3 class="menu-title">Analytics & Reportes</h3>
+            <p class="menu-description">
+                Visualiza indicadores clave, métricas de cumplimiento y reportes ejecutivos
+                para tu sitio industrial.
+            </p>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown('<div class="primary-action">', unsafe_allow_html=True)
+    if st.button("Abrir analytics", key="analytics_reports", use_container_width=True):
+        st.switch_page("pages/Analytics_Reports.py")
     st.markdown("</div></div>", unsafe_allow_html=True)
 
 st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
