@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import json
 import os
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
 
@@ -80,6 +79,82 @@ st.markdown(
             margin-top: 16px;
         }
 
+        .matrix-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .matrix-table th {
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .matrix-table td {
+            padding: 14px 10px;
+            border-bottom: 1px solid #eef2f6;
+            color: var(--text-dark);
+            vertical-align: top;
+        }
+
+        .matrix-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .status-ok {
+            background: rgba(34, 197, 94, 0.15);
+            color: #15803d;
+        }
+
+        .status-bad {
+            background: rgba(239, 68, 68, 0.15);
+            color: #b91c1c;
+        }
+
+        .action-dot {
+            color: #94a3b8;
+            font-size: 20px;
+        }
+
+        .side-card {
+            background: white;
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .file-card {
+            border: 1px solid #eef2f6;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
         .section-title {
             font-size: 18px;
             font-weight: 700;
@@ -122,6 +197,13 @@ st.markdown(
             padding: 12px 14px !important;
             font-size: 14px !important;
             box-shadow: none !important;
+        }
+
+        .stTextInput input:focus,
+        .stSelectbox div[data-baseweb="select"] > div:focus-within,
+        .stTextArea textarea:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px rgba(0, 140, 186, 0.15) !important;
         }
 
         .stRadio [role="radiogroup"] {
@@ -234,6 +316,48 @@ archivos_evidencia = diagnostico_guardado.get("archivos_evidencia", {})
 if not isinstance(archivos_evidencia, dict):
     archivos_evidencia = {}
 
+def _status_badge(estado):
+    if estado == "Cumple":
+        return '<span class="status-pill status-ok">Cumple</span>'
+    return '<span class="status-pill status-bad">No cumple</span>'
+
+
+def _render_matrix_table(rows):
+    if not rows:
+        st.info("No hay registros que coincidan con la búsqueda.")
+        return
+    table_rows = []
+    for row in rows:
+        table_rows.append(
+            f"""
+            <tr>
+                <td><strong>{row['Categoría']}</strong></td>
+                <td>{row['Sección / Capítulo']}</td>
+                <td>{row['Descripción']}</td>
+                <td>{_status_badge(row['Estado'])}</td>
+                <td class="action-dot">⋯</td>
+            </tr>
+            """
+        )
+    table_html = """
+        <table class="matrix-table">
+            <thead>
+                <tr>
+                    <th>Norma</th>
+                    <th>Sección</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    """.format(rows="".join(table_rows))
+    st.markdown(table_html, unsafe_allow_html=True)
+
+
 if not df.empty:
     respuestas_usuario = diagnostico_guardado.get("respuestas", {})
 
@@ -273,29 +397,38 @@ if not df.empty:
             unsafe_allow_html=True,
         )
 
-        gb = GridOptionsBuilder.from_dataframe(df_resultados)
-        gb.configure_default_column(filter=True, sortable=True)
-        gb.configure_selection(selection_mode="single", use_checkbox=True)
-        grid_options = gb.build()
+        search_query = st.text_input("Buscar estándar o sección", placeholder="Buscar estándar o sección...")
+        if search_query:
+            filtered_rows = df_resultados[
+                df_resultados.apply(
+                    lambda row: search_query.lower() in str(row["Descripción"]).lower()
+                    or search_query.lower() in str(row["Sección / Capítulo"]).lower()
+                    or search_query.lower() in str(row["Categoría"]).lower(),
+                    axis=1,
+                )
+            ]
+        else:
+            filtered_rows = df_resultados
 
-        grid_response = AgGrid(
-            df_resultados,
-            gridOptions=grid_options,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-            theme="balham",
-            fit_columns_on_grid_load=True,
+        st.markdown(
+            '<div class="matrix-header"><strong>Evaluation Matrix</strong></div>',
+            unsafe_allow_html=True,
         )
+        _render_matrix_table(filtered_rows.to_dict("records"))
 
-        selected_rows = grid_response["selected_rows"]
-        selected_row = None
-        if isinstance(selected_rows, list) and len(selected_rows) > 0:
-            selected_row = selected_rows[0]
-        elif isinstance(selected_rows, pd.DataFrame) and not selected_rows.empty:
-            selected_row = selected_rows.iloc[0].to_dict()
+        opciones_descripcion = filtered_rows["Descripción"].tolist()
+        if opciones_descripcion:
+            descripcion_sel = st.selectbox(
+                "Selecciona un criterio para gestionar evidencia",
+                opciones_descripcion,
+            )
+        else:
+            descripcion_sel = None
 
-        if selected_row is not None:
-            descripcion_sel = selected_row["Descripción"]
-            estado_actual = selected_row["Estado"]
+        if descripcion_sel:
+            estado_actual = df_resultados.loc[
+                df_resultados["Descripción"] == descripcion_sel, "Estado"
+            ].iloc[0]
 
             st.markdown('<div class="secondary-action">', unsafe_allow_html=True)
             if st.button("Cambiar estado"):
@@ -328,91 +461,96 @@ if not df.empty:
                 st.rerun()
             st.markdown("</div>", unsafe_allow_html=True)
 
-            st.markdown(
-                f"<div class=\"section-title\">📎 Evidencia para: {descripcion_sel}</div>",
-                unsafe_allow_html=True,
-            )
-            archivos_actuales = archivos_evidencia.get(descripcion_sel, [])
-            if archivos_actuales:
-                for ruta in archivos_actuales:
-                    nombre_archivo = os.path.basename(ruta)
-                    cols = st.columns([0.5, 0.25, 0.25])
-                    with cols[0]:
-                        st.markdown(f"**{nombre_archivo}**")
-                    with cols[1]:
-                        with open(ruta, "rb") as f:
-                            file_bytes = f.read()
-                        st.download_button(
-                            label="Descargar",
-                            data=file_bytes,
-                            file_name=nombre_archivo,
-                            key=f"descarga_{ruta}",
-                        )
-                    with cols[2]:
-                        if st.button("Eliminar", key=f"eliminar_{ruta}"):
-                            archivos_evidencia[descripcion_sel].remove(ruta)
-                            if os.path.exists(ruta):
-                                os.remove(ruta)
-                            folder = os.path.join("diagnosticos", norma_actual)
-                            os.makedirs(folder, exist_ok=True)
-                            archivo_guardado = os.path.join(
-                                folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json"
+            evidence_left, evidence_right = st.columns([0.6, 0.4])
+            with evidence_left:
+                st.markdown(
+                    f"<div class=\"section-title\">📎 Evidencia para: {descripcion_sel}</div>",
+                    unsafe_allow_html=True,
+                )
+                archivos_actuales = archivos_evidencia.get(descripcion_sel, [])
+                if archivos_actuales:
+                    for ruta in archivos_actuales:
+                        nombre_archivo = os.path.basename(ruta)
+                        cols = st.columns([0.6, 0.2, 0.2])
+                        with cols[0]:
+                            st.markdown(f"**{nombre_archivo}**")
+                        with cols[1]:
+                            with open(ruta, "rb") as f:
+                                file_bytes = f.read()
+                            st.download_button(
+                                label="Descargar",
+                                data=file_bytes,
+                                file_name=nombre_archivo,
+                                key=f"descarga_{ruta}",
                             )
-                            with open(archivo_guardado, "w", encoding="utf-8") as file:
-                                json.dump(
-                                    {
-                                        "sitio": sitio_actual,
-                                        "norma": norma_actual,
-                                        "respuestas": respuestas_usuario,
-                                        "archivos_evidencia": archivos_evidencia,
-                                    },
-                                    file,
-                                    indent=4,
+                        with cols[2]:
+                            if st.button("Eliminar", key=f"eliminar_{ruta}"):
+                                archivos_evidencia[descripcion_sel].remove(ruta)
+                                if os.path.exists(ruta):
+                                    os.remove(ruta)
+                                folder = os.path.join("diagnosticos", norma_actual)
+                                os.makedirs(folder, exist_ok=True)
+                                archivo_guardado = os.path.join(
+                                    folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json"
                                 )
-                            st.success("Archivo eliminado correctamente.")
-                            st.rerun()
-
-            archivos_subidos = st.file_uploader(
-                "Selecciona uno o varios archivos",
-                type=["jpg", "jpeg", "png", "docx", "pdf", "xlsx"],
-                accept_multiple_files=True,
-                key=f"file_{descripcion_sel}",
-            )
-            if archivos_subidos:
-                st.markdown('<div class="primary-action">', unsafe_allow_html=True)
-                if st.button("Guardar archivo(s)"):
-                    carpeta_evidencias = os.path.join("evidencias", norma_actual)
-                    os.makedirs(carpeta_evidencias, exist_ok=True)
-                    for file_obj in archivos_subidos:
-                        filename = f"{descripcion_sel}_{file_obj.name}".replace(" ", "_")
-                        filepath = os.path.join(carpeta_evidencias, filename)
-                        with open(filepath, "wb") as f:
-                            f.write(file_obj.getbuffer())
-                        if descripcion_sel not in archivos_evidencia:
-                            archivos_evidencia[descripcion_sel] = []
-                        archivos_evidencia[descripcion_sel].append(filepath)
-                    cumple_count = sum(1 for r in respuestas_usuario.values() if r == "Sí")
-                    total_count = len(respuestas_usuario)
-                    nuevo_cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
-                    folder = os.path.join("diagnosticos", norma_actual)
-                    os.makedirs(folder, exist_ok=True)
-                    archivo_guardado = os.path.join(
-                        folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json"
-                    )
-                    with open(archivo_guardado, "w", encoding="utf-8") as file:
-                        json.dump(
-                            {
-                                "sitio": sitio_actual,
-                                "norma": norma_actual,
-                                "cumplimiento": f"{nuevo_cumplimiento:.2f}%",
-                                "respuestas": respuestas_usuario,
-                                "archivos_evidencia": archivos_evidencia,
-                            },
-                            file,
-                            indent=4,
+                                with open(archivo_guardado, "w", encoding="utf-8") as file:
+                                    json.dump(
+                                        {
+                                            "sitio": sitio_actual,
+                                            "norma": norma_actual,
+                                            "respuestas": respuestas_usuario,
+                                            "archivos_evidencia": archivos_evidencia,
+                                        },
+                                        file,
+                                        indent=4,
+                                    )
+                                st.success("Archivo eliminado correctamente.")
+                                st.rerun()
+            with evidence_right:
+                st.markdown('<div class="side-card">', unsafe_allow_html=True)
+                st.markdown("**Subir nueva evidencia**")
+                archivos_subidos = st.file_uploader(
+                    "Selecciona uno o varios archivos",
+                    type=["jpg", "jpeg", "png", "docx", "pdf", "xlsx"],
+                    accept_multiple_files=True,
+                    key=f"file_{descripcion_sel}",
+                )
+                if archivos_subidos:
+                    st.markdown('<div class="primary-action">', unsafe_allow_html=True)
+                    if st.button("Guardar archivo(s)"):
+                        carpeta_evidencias = os.path.join("evidencias", norma_actual)
+                        os.makedirs(carpeta_evidencias, exist_ok=True)
+                        for file_obj in archivos_subidos:
+                            filename = f"{descripcion_sel}_{file_obj.name}".replace(" ", "_")
+                            filepath = os.path.join(carpeta_evidencias, filename)
+                            with open(filepath, "wb") as f:
+                                f.write(file_obj.getbuffer())
+                            if descripcion_sel not in archivos_evidencia:
+                                archivos_evidencia[descripcion_sel] = []
+                            archivos_evidencia[descripcion_sel].append(filepath)
+                        cumple_count = sum(1 for r in respuestas_usuario.values() if r == "Sí")
+                        total_count = len(respuestas_usuario)
+                        nuevo_cumplimiento = (cumple_count / total_count * 100) if total_count > 0 else 0
+                        folder = os.path.join("diagnosticos", norma_actual)
+                        os.makedirs(folder, exist_ok=True)
+                        archivo_guardado = os.path.join(
+                            folder, f"cumplimiento_{sitio_actual}_{norma_actual}.json"
                         )
-                    st.success("Archivo(s) guardado(s) correctamente.")
-                    st.rerun()
+                        with open(archivo_guardado, "w", encoding="utf-8") as file:
+                            json.dump(
+                                {
+                                    "sitio": sitio_actual,
+                                    "norma": norma_actual,
+                                    "cumplimiento": f"{nuevo_cumplimiento:.2f}%",
+                                    "respuestas": respuestas_usuario,
+                                    "archivos_evidencia": archivos_evidencia,
+                                },
+                                file,
+                                indent=4,
+                            )
+                        st.success("Archivo(s) guardado(s) correctamente.")
+                        st.rerun()
+                    st.markdown("</div>", unsafe_allow_html=True)
                 st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
