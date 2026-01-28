@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Compliance Analytics Reports</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#008ab8",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#0f1e23",
+                        "accent-success": "#078836",
+                        "accent-warning": "#f59e0b",
+                        "accent-danger": "#e73508",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .chart-container {
+            position: relative;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#0c181d] dark:text-white min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-72 bg-white dark:bg-[#15262c] border-r border-[#cde2ea] dark:border-[#2a3f47] flex flex-col shrink-0">
+<div class="p-6 flex flex-col gap-6 h-full">
+<!-- Brand -->
+<div class="flex gap-3 items-center">
+<div class="bg-primary rounded-lg p-2 text-white">
+<span class="material-symbols-outlined">shield_with_heart</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#0c181d] dark:text-white text-base font-bold leading-tight">STPS Compliance</h1>
+<p class="text-[#458aa1] text-xs font-normal">Industrial Safety Management</p>
+</div>
+</div>
+<!-- Site Selection -->
+<div class="flex flex-col gap-2">
+<label class="text-[#0c181d] dark:text-white text-sm font-semibold">Select Industrial Site</label>
+<div class="relative">
+<select class="w-full rounded-lg border border-[#cde2ea] dark:border-[#2a3f47] bg-[#f8fbfc] dark:bg-[#1a2e35] p-2.5 text-sm focus:ring-primary focus:border-primary appearance-none">
+<option>Monterrey Plant A</option>
+<option>Querétaro Logistics Hub</option>
+<option>Guadalajara Manufacturing</option>
+<option>Puebla Distribution</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-[#458aa1] pointer-events-none">unfold_more</span>
+</div>
+</div>
+<!-- Nav Links -->
+<nav class="flex flex-col gap-1 grow">
+<a class="flex items-center gap-3 px-3 py-2 text-[#458aa1] hover:bg-primary/10 hover:text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#458aa1] hover:bg-primary/10 hover:text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Site Diagnostics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-sm font-medium">Analytics Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#458aa1] hover:bg-primary/10 hover:text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">library_books</span>
+<span class="text-sm font-medium">Standards Library</span>
+</a>
+<div class="mt-4 pt-4 border-t border-[#cde2ea] dark:border-[#2a3f47]">
+<a class="flex items-center gap-3 px-3 py-2 text-[#458aa1] hover:bg-primary/10 hover:text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</div>
+</nav>
+<!-- Footer Sidebar Action -->
+<button class="w-full bg-primary text-white font-bold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-all">
+<span class="material-symbols-outlined text-xl">ios_share</span>
+<span class="text-sm">Export Data</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-y-auto">
+<!-- Header -->
+<header class="bg-white dark:bg-[#15262c] border-b border-[#cde2ea] dark:border-[#2a3f47] px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+<div class="flex items-center gap-4">
+<h2 class="text-xl font-bold text-[#0c181d] dark:text-white">Compliance Analytics</h2>
+<span class="px-2 py-1 bg-accent-success/10 text-accent-success text-xs font-bold rounded">LIVE DATA</span>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-2 text-[#458aa1] text-xl">search</span>
+<input class="w-full pl-10 pr-4 py-2 rounded-lg border border-[#cde2ea] dark:border-[#2a3f47] bg-[#f8fbfc] dark:bg-[#1a2e35] text-sm focus:ring-primary focus:border-primary" placeholder="Search parameters..." type="text"/>
+</div>
+<button class="p-2 text-[#458aa1] hover:bg-[#e6f1f4] rounded-full transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-10 w-10 rounded-full border border-primary/20 p-0.5">
+<img class="h-full w-full rounded-full object-cover" data-alt="Profile picture of the industrial safety manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDD3TCgjSwNzliKn2SVWZtsa_nqI-VSoOhMrK1A43O41ZZNWzRWJ19rI0rDXvgm7OTOL5FGw_YjBDXqOmrd6mmk-gibWciWP5KVrPuN7tuMMctoW8p4OX99jNpKha-uRxuFTwCE2K62YWgC1ZBWE3SZFP81keLoIhi07rKtLy4rnfe5qMIXskBD3bx5UBkSZ2EvgS2Ss-Q1fvU5rTX_-WD4mx0XHu2B2TD-yCPQ9V1zTWFdkDtjKI25ND-Ds5ETfz_nPao-EbR8EkQu"/>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="p-8 flex flex-col gap-8 max-w-[1200px] mx-auto w-full">
+<!-- Page Title & Quick Actions -->
+<div class="flex justify-between items-end">
+<div>
+<h3 class="text-3xl font-black tracking-tight mb-2">Reports &amp; Analytics</h3>
+<p class="text-[#458aa1]">Detailed STPS standards compliance overview for <span class="font-semibold text-[#0c181d] dark:text-white">Monterrey Plant A</span></p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-[#e6f1f4] dark:bg-[#1a2e35] text-[#0c181d] dark:text-white font-bold rounded-lg hover:bg-[#d1e6ed] transition-colors">
+<span class="material-symbols-outlined text-xl">refresh</span>
+<span>Refresh Data</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors">
+<span class="material-symbols-outlined text-xl">picture_as_pdf</span>
+<span>Download PDF</span>
+</button>
+</div>
+</div>
+<!-- Metrics Overview -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="bg-white dark:bg-[#15262c] p-6 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm flex flex-col gap-1">
+<div class="flex justify-between items-start mb-2">
+<p class="text-[#458aa1] text-sm font-medium">Overall Compliance</p>
+<span class="bg-accent-success/10 text-accent-success text-xs font-bold px-2 py-0.5 rounded">+5.2%</span>
+</div>
+<p class="text-3xl font-bold">85.4%</p>
+<div class="w-full bg-[#e6f1f4] dark:bg-[#1a2e35] h-2 rounded-full mt-4">
+<div class="bg-primary h-full rounded-full" style="width: 85%;"></div>
+</div>
+</div>
+<div class="bg-white dark:bg-[#15262c] p-6 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm flex flex-col gap-1">
+<div class="flex justify-between items-start mb-2">
+<p class="text-[#458aa1] text-sm font-medium">Critical Non-Compliance</p>
+<span class="bg-accent-danger/10 text-accent-danger text-xs font-bold px-2 py-0.5 rounded">-2 items</span>
+</div>
+<p class="text-3xl font-bold text-accent-danger">12</p>
+<p class="text-xs text-[#458aa1] mt-4">Requires immediate attention in Zone C</p>
+</div>
+<div class="bg-white dark:bg-[#15262c] p-6 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm flex flex-col gap-1">
+<div class="flex justify-between items-start mb-2">
+<p class="text-[#458aa1] text-sm font-medium">Items Inspected</p>
+<span class="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded">Current Month</span>
+</div>
+<p class="text-3xl font-bold">1,240</p>
+<p class="text-xs text-[#458aa1] mt-4">98.5% of scheduled audits completed</p>
+</div>
+</div>
+<!-- Main Charts Section -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+<!-- Large Gauge/Primary Metric -->
+<div class="lg:col-span-8 bg-white dark:bg-[#15262c] p-8 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm">
+<h4 class="text-lg font-bold mb-6">Global Compliance Performance</h4>
+<div class="flex items-center justify-around h-64">
+<!-- SVG Gauge Chart Mockup -->
+<div class="relative w-56 h-56 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-[#e6f1f4] dark:text-[#1a2e35]" cx="112" cy="112" fill="transparent" r="100" stroke="currentColor" stroke-width="18"></circle>
+<circle class="text-primary" cx="112" cy="112" fill="transparent" r="100" stroke="currentColor" stroke-dasharray="628" stroke-dashoffset="94" stroke-linecap="round" stroke-width="18"></circle>
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="text-5xl font-black">85%</span>
+<span class="text-[#458aa1] text-sm font-medium">Global Score</span>
+</div>
+</div>
+<div class="flex flex-col gap-6 w-1/2">
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-[#458aa1]">Safety Standards</span>
+<span class="font-bold">92%</span>
+</div>
+<div class="w-full bg-[#e6f1f4] dark:bg-[#1a2e35] h-2 rounded-full">
+<div class="bg-accent-success h-full rounded-full" style="width: 92%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-[#458aa1]">Hygiene Standards</span>
+<span class="font-bold">78%</span>
+</div>
+<div class="w-full bg-[#e6f1f4] dark:bg-[#1a2e35] h-2 rounded-full">
+<div class="bg-accent-warning h-full rounded-full" style="width: 78%;"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-sm">
+<span class="text-[#458aa1]">Organization Standards</span>
+<span class="font-bold">81%</span>
+</div>
+<div class="w-full bg-[#e6f1f4] dark:bg-[#1a2e35] h-2 rounded-full">
+<div class="bg-primary h-full rounded-full" style="width: 81%;"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Pie Chart Distribution -->
+<div class="lg:col-span-4 bg-white dark:bg-[#15262c] p-8 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm">
+<h4 class="text-lg font-bold mb-6">Status Distribution</h4>
+<div class="flex flex-col items-center gap-8">
+<div class="relative w-48 h-48">
+<svg class="w-full h-full transform -rotate-90" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#e73508" stroke-dasharray="100" stroke-dashoffset="0" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#f59e0b" stroke-dasharray="85" stroke-dashoffset="0" stroke-width="4"></circle>
+<circle cx="18" cy="18" fill="transparent" r="16" stroke="#078836" stroke-dasharray="70" stroke-dashoffset="0" stroke-width="4"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center flex-col">
+<span class="text-2xl font-bold">1.2k</span>
+<span class="text-[10px] text-[#458aa1] uppercase">Total Items</span>
+</div>
+</div>
+<div class="w-full flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-accent-success"></div>
+<span class="text-sm text-[#458aa1]">Compliant</span>
+</div>
+<span class="text-sm font-bold">70%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-accent-warning"></div>
+<span class="text-sm text-[#458aa1]">In Progress</span>
+</div>
+<span class="text-sm font-bold">15%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-accent-danger"></div>
+<span class="text-sm text-[#458aa1]">Non-Compliant</span>
+</div>
+<span class="text-sm font-bold">15%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bar Chart Standards Comparison -->
+<div class="lg:col-span-12 bg-white dark:bg-[#15262c] p-8 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm">
+<div class="flex justify-between items-center mb-8">
+<h4 class="text-lg font-bold">Compliance by NOM Standard</h4>
+<div class="flex gap-2">
+<span class="flex items-center gap-1 text-xs text-[#458aa1]">
+<div class="w-2 h-2 rounded-full bg-primary"></div> Compliance %
+                                </span>
+</div>
+</div>
+<div class="grid grid-cols-7 gap-4 h-48 items-end">
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[85%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">85%</div>
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-001</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[92%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">92%</div>
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-002</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[68%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">68%</div>
+<div class="absolute bottom-0 w-full bg-accent-warning rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-017</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[75%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">75%</div>
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-019</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[42%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">42%</div>
+<div class="absolute bottom-0 w-full bg-accent-danger rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-020</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[88%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">88%</div>
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-026</span>
+</div>
+<div class="flex flex-col items-center gap-2 h-full justify-end">
+<div class="w-full bg-primary/20 rounded-t-lg relative group h-[95%]">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">95%</div>
+<div class="absolute bottom-0 w-full bg-primary rounded-t-lg h-full"></div>
+</div>
+<span class="text-[10px] font-bold text-[#458aa1]">NOM-035</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Recent Activities / Notifications -->
+<div class="bg-white dark:bg-[#15262c] p-6 rounded-xl border border-[#cde2ea] dark:border-[#2a3f47] shadow-sm mb-12">
+<h4 class="text-lg font-bold mb-6">Recent Diagnostic Events</h4>
+<div class="flex flex-col divide-y divide-[#cde2ea] dark:divide-[#2a3f47]">
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="bg-accent-success/10 p-2 rounded-full text-accent-success">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<p class="text-sm font-bold">Standard NOM-035 Audit Passed</p>
+<p class="text-xs text-[#458aa1]">Pyschosocial risk factors survey completed for Section 4</p>
+</div>
+</div>
+<span class="text-xs text-[#458aa1] font-medium">2 hours ago</span>
+</div>
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="bg-accent-danger/10 p-2 rounded-full text-accent-danger">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div>
+<p class="text-sm font-bold">Critical Violation: Pressure Vessel</p>
+<p class="text-xs text-[#458aa1]">Missing valid maintenance log for Boiler Unit B2</p>
+</div>
+</div>
+<span class="text-xs text-[#458aa1] font-medium">5 hours ago</span>
+</div>
+<div class="py-4 flex items-center justify-between">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 p-2 rounded-full text-primary">
+<span class="material-symbols-outlined">sync</span>
+</div>
+<div>
+<p class="text-sm font-bold">New Diagnostic Schedule Generated</p>
+<p class="text-xs text-[#458aa1]">Next general inspection set for Nov 15th, 2023</p>
+</div>
+</div>
+<span class="text-xs text-[#458aa1] font-medium">Yesterday</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
