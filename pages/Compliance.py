@@ -334,7 +334,7 @@ with menu_right:
     )
     st.markdown('<div class="primary-action">', unsafe_allow_html=True)
     if st.button("Abrir analytics", key="analytics_reports", use_container_width=True):
-        st.switch_page("pages/Analytics_Reports.py")
+        st.switch_page("Analytics Reports")
     st.markdown("</div></div>", unsafe_allow_html=True)
 
 st.markdown('<div class="subtle-divider"></div>', unsafe_allow_html=True)
