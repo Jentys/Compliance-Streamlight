@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import json
 import os
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Evaluación de Cumplimiento", layout="wide")
 
@@ -340,6 +341,51 @@ def _render_matrix_table(rows):
             """
         )
     table_html = """
+        <style>
+            .matrix-table {{
+                width: 100%;
+                border-collapse: collapse;
+                font-family: 'Inter', sans-serif;
+                font-size: 14px;
+            }}
+            .matrix-table th {{
+                text-align: left;
+                font-weight: 600;
+                color: #64748B;
+                padding: 12px 10px;
+                border-bottom: 1px solid #E2E8F0;
+            }}
+            .matrix-table td {{
+                padding: 14px 10px;
+                border-bottom: 1px solid #eef2f6;
+                color: #0F172A;
+                vertical-align: top;
+            }}
+            .matrix-table tr:hover {{
+                background: #f8fafc;
+            }}
+            .status-pill {{
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 4px 12px;
+                border-radius: 999px;
+                font-weight: 600;
+                font-size: 12px;
+            }}
+            .status-ok {{
+                background: rgba(34, 197, 94, 0.15);
+                color: #15803d;
+            }}
+            .status-bad {{
+                background: rgba(239, 68, 68, 0.15);
+                color: #b91c1c;
+            }}
+            .action-dot {{
+                color: #94a3b8;
+                font-size: 20px;
+            }}
+        </style>
         <table class="matrix-table">
             <thead>
                 <tr>
@@ -355,7 +401,8 @@ def _render_matrix_table(rows):
             </tbody>
         </table>
     """.format(rows="".join(table_rows))
-    st.markdown(table_html, unsafe_allow_html=True)
+    table_height = min(520, 140 + len(rows) * 44)
+    components.html(table_html, height=table_height, scrolling=True)
 
 
 if not df.empty:
